@@ -1,0 +1,16 @@
+    3 - MG955 or 946 сервопривод
+    1 - SG90 сервопривод
+    1 - M6 самоконтрящаяся гайка (основание)
+    1 - M6x25 винт (основание)
+    3 - M3 самоконтрящихся гайки (можно обычные) (основание)
+    3 - M3 x 20 винт (основание) 
+    1 - M3 x 10 hex recessed head screw
+    9 - M4 selflocking nuts
+    1 - M4 x 40 screw
+    1 - M4 x 30 screw
+    5 - M4 x 20 screw
+    1 - M4 x 60mm threaded rod
+    1 - M4 x 32mm threaded rod
+    25 - dia 6 mm ball spheres
+    1 - 606zz bearing
+    some M4 washers
