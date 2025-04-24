@@ -5,6 +5,54 @@ import sys, serial
 from PyQt5.QtWidgets import QApplication, QWidget, QSlider, QLabel, QHBoxLayout, QVBoxLayout, QPushButton
 from PyQt5.QtCore import Qt
 
+class RecordState():
+    def __init__(self):
+        self.column = None
+        self.columns = dict()
+        self.columns["left"] = list()
+        self.columns["center"] = list()
+        self.columns["right"] = list()
+        self.claws = dict()
+
+        for key in self.columns.keys():
+            for r in range(0,6):
+                self.columns[key].append(None)
+    
+    def set_claw(self, claw, value):
+        self.claws[claw] = value
+
+    def set_column(self, column, values):
+        self.column = column
+        self.columns[column] = values
+
+    def set_row(self, row, values):
+        if self.column:
+            self.columns[self.column].rows[row] = values
+    
+    def get_values(self, column, row):
+        if self.columns[column]:
+            return self.columns[column].rows[row]
+        return None
+    
+    def init_record(self):
+        self.record = list()
+        self.index = -1
+    
+    def add_record(self, column, row, claw):
+        self.record.append((column,row,claw))
+
+    def get_next_record(self):
+        if self.index < len(self.record):
+            self.index += 1
+            return self.record[self.index]
+        return None
+    
+    def get_prev_record(self):
+        if self.index > 0:
+            self.index -= 1
+            return self.record[self.index]
+        return None
+
 class SliderApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -77,6 +125,21 @@ class SliderApp(QWidget):
         layoutv.addLayout(layout_v)
         self.update_label_hanoi_vertical()
 
+        layout_buttons = QHBoxLayout()
+        self.calibrate_pb = QPushButton("Calibrate")
+        self.calibrate_pb.setCheckable(True)
+        self.record_pb = QPushButton("Record")
+        self.record_pb.setCheckable(True)
+        self.play_pb = QPushButton("Play")
+        self.play_pb.setCheckable(True)
+        self.reverse_pb = QPushButton("Reverse")
+        self.reverse_pb.setCheckable(True)
+        layout_buttons.addWidget(self.calibrate_pb)
+        layout_buttons.addWidget(self.record_pb)
+        layout_buttons.addWidget(self.play_pb)
+        layout_buttons.addWidget(self.reverse_pb)
+        layoutv.addLayout(layout_buttons)
+
         # Connect the slider's valueChanged signal to the update_label slot
         self.slider_claw.valueChanged.connect(self.update_label_claw)
         self.slider_rotate.valueChanged.connect(self.update_label_rotate)
@@ -88,6 +151,11 @@ class SliderApp(QWidget):
         self.center_hanoi_pb.pressed.connect(self.center_hanoi_pressed)
         self.right_hanoi_pb.pressed.connect(self.right_hanoi_pressed)
         self.claw_hanoi_pb.pressed.connect(self.claw_hanoi_pressed)
+
+        self.calibrate_pb.pressed.connect(self.calibrate_pressed)
+        self.record_pb.pressed.connect(self.record_pressed)
+        self.play_pb.pressed.connect(self.play_pressed)
+        self.reverse_pb.pressed.connect(self.reverse_pressed)
 
         self.setLayout(layoutv)
 
@@ -126,6 +194,18 @@ class SliderApp(QWidget):
     
     def claw_hanoi_pressed(self):
         print("claw")
+
+    def calibrate_pressed(self):
+        print(f"calibrate {self.calibrate_pb.isChecked()}")
+
+    def record_pressed(self):
+        print(f"record {self.record_pb.isChecked()}")
+    
+    def play_pressed(self):
+        print("play")
+
+    def reverse_pressed(self):
+        print("reverse")
 
     def write_to_arduino(self, command):
         print(command)
