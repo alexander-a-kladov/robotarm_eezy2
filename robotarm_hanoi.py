@@ -7,7 +7,6 @@ from PyQt5.QtCore import Qt
 
 class RecordState():
     def __init__(self):
-        self.column = None
         self.columns = dict()
         self.columns["left"] = list()
         self.columns["center"] = list()
@@ -21,17 +20,12 @@ class RecordState():
     def set_claw(self, claw, value):
         self.claws[claw] = value
 
-    def set_column(self, column, values):
-        self.column = column
-        self.columns[column] = values
-
-    def set_row(self, row, values):
-        if self.column:
-            self.columns[self.column].rows[row] = values
+    def set_row(self, column, row, values):
+        self.columns[column][row] = values
     
     def get_values(self, column, row):
         if self.columns[column]:
-            return self.columns[column].rows[row]
+            return self.columns[column][row]
         return None
     
     def init_record(self):
@@ -46,17 +40,13 @@ class RecordState():
             self.index += 1
             return self.record[self.index]
         return None
-    
-    def get_prev_record(self):
-        if self.index > 0:
-            self.index -= 1
-            return self.record[self.index]
-        return None
+
 
 class SliderApp(QWidget):
     def __init__(self):
         super().__init__()
         #self.to_arduino = serial.Serial('/dev/ttyUSB0', 9600)
+        self.record_state = RecordState()
         self.setWindowTitle("Robot Arm Control")
         self.setGeometry(100, 100, 500, 300)  # (x, y, width, height)
         
@@ -109,6 +99,7 @@ class SliderApp(QWidget):
         self.center_hanoi_pb = QPushButton("center")
         self.right_hanoi_pb = QPushButton("right")
         self.claw_hanoi_pb = QPushButton("claw")
+        self.claw_hanoi_pb.setCheckable(True)
         layout_buttons.addWidget(self.left_hanoi_pb)
         layout_buttons.addWidget(self.center_hanoi_pb)
         layout_buttons.addWidget(self.right_hanoi_pb)
@@ -150,7 +141,7 @@ class SliderApp(QWidget):
         self.left_hanoi_pb.pressed.connect(self.left_hanoi_pressed)
         self.center_hanoi_pb.pressed.connect(self.center_hanoi_pressed)
         self.right_hanoi_pb.pressed.connect(self.right_hanoi_pressed)
-        self.claw_hanoi_pb.pressed.connect(self.claw_hanoi_pressed)
+        self.claw_hanoi_pb.toggled.connect(self.claw_hanoi_toggled)
 
         self.calibrate_pb.pressed.connect(self.calibrate_pressed)
         self.record_pb.pressed.connect(self.record_pressed)
@@ -183,17 +174,31 @@ class SliderApp(QWidget):
         value = self.slider_hanoi_vertical.value()
         self.label_hanoi_vertical.setText(f"{value}")
 
+    def get_values(self):
+        value1 = self.slider_rotate.value()
+        value2 = self.slider_fb.value()
+        value3 = self.slider_ud.value()
+        value4 = self.slider_claw.value()
+        return (value1, value2, value3, value4)
+
     def left_hanoi_pressed(self):
-        print("left")
+        v1, v2, v3, v4 = self.get_values()
+        if self.calibrate_pb.isChecked():
+            self.record_state.set_row("left", self.slider_hanoi_vertical.value(), (v1, v2, v3))
 
     def center_hanoi_pressed(self):
-        print("center")
+        v1, v2, v3, v4 = self.get_values()
+        if self.calibrate_pb.isChecked():
+            self.record_state.set_row("center", self.slider_hanoi_vertical.value(), (v1, v2, v3))
 
     def right_hanoi_pressed(self):
-        print("right")
+        v1, v2, v3, v4 = self.get_values()
+        if self.calibrate_pb.isChecked():
+            self.record_state.set_row("right", self.slider_hanoi_vertical.value(), (v1, v2, v3))
     
-    def claw_hanoi_pressed(self):
-        print("claw")
+    def claw_hanoi_toggled(self):
+        _, _, _, claw = self.get_values()
+        
 
     def calibrate_pressed(self):
         print(f"calibrate {self.calibrate_pb.isChecked()}")
