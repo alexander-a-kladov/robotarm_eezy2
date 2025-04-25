@@ -26,8 +26,8 @@ class RecordState():
     def get_values(self, column, row):
         if self.columns[column]:
             return self.columns[column][row]
-        return None
-    
+        return (None, None, None)
+       
     def init_record(self):
         self.record = list()
         self.index = -1
@@ -138,9 +138,9 @@ class SliderApp(QWidget):
         self.slider_ud.valueChanged.connect(self.update_label_ud)
         self.slider_hanoi_vertical.valueChanged.connect(self.update_label_hanoi_vertical)
 
-        self.left_hanoi_pb.pressed.connect(self.left_hanoi_pressed)
-        self.center_hanoi_pb.pressed.connect(self.center_hanoi_pressed)
-        self.right_hanoi_pb.pressed.connect(self.right_hanoi_pressed)
+        self.left_hanoi_pb.pressed.connect(self.column_buttons_hanoi_pressed)
+        self.center_hanoi_pb.pressed.connect(self.column_buttons_hanoi_pressed)
+        self.right_hanoi_pb.pressed.connect(self.column_buttons_hanoi_pressed)
         self.claw_hanoi_pb.toggled.connect(self.claw_hanoi_toggled)
 
         self.calibrate_pb.pressed.connect(self.calibrate_pressed)
@@ -180,25 +180,27 @@ class SliderApp(QWidget):
         value3 = self.slider_ud.value()
         value4 = self.slider_claw.value()
         return (value1, value2, value3, value4)
+    
+    def set_values(self, values):
+        v1, v2, v3, v4 = values
+        self.slider_rotate.setValue(v1)
+        self.slider_fb.setValue(v2)
+        self.slider_ud.setValue(v3)
+        self.slider_claw.setValue(v4)
 
-    def left_hanoi_pressed(self):
+    def column_buttons_hanoi_pressed(self):
+        sender = self.sender()
         v1, v2, v3, v4 = self.get_values()
         if self.calibrate_pb.isChecked():
-            self.record_state.set_row("left", self.slider_hanoi_vertical.value(), (v1, v2, v3))
-
-    def center_hanoi_pressed(self):
-        v1, v2, v3, v4 = self.get_values()
-        if self.calibrate_pb.isChecked():
-            self.record_state.set_row("center", self.slider_hanoi_vertical.value(), (v1, v2, v3))
-
-    def right_hanoi_pressed(self):
-        v1, v2, v3, v4 = self.get_values()
-        if self.calibrate_pb.isChecked():
-            self.record_state.set_row("right", self.slider_hanoi_vertical.value(), (v1, v2, v3))
+            print(v1,v2,v3)
+            self.record_state.set_row(sender.text(), self.slider_hanoi_vertical.value(), (v1, v2, v3))
+        if self.record_pb.isChecked():
+            v1, v2, v3 = self.record_state.get_values(sender.text(), self.slider_hanoi_vertical.value())
+            if v1:
+                self.set_values((v1, v2, v3, self.slider_claw.value()))
     
     def claw_hanoi_toggled(self):
         _, _, _, claw = self.get_values()
-        
 
     def calibrate_pressed(self):
         print(f"calibrate {self.calibrate_pb.isChecked()}")
