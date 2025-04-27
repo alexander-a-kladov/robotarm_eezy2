@@ -12,6 +12,9 @@ class RecordState():
         self.columns["center"] = list()
         self.columns["right"] = list()
         self.claws = dict()
+        self.init_record()
+
+        self.load_solution()
 
         for key in self.columns.keys():
             for r in range(0,6):
@@ -32,6 +35,29 @@ class RecordState():
         self.record = list()
         self.index = -1
     
+    def load_solution(self):
+        column = "left"
+        row = 5
+        claw = True
+        columns = {"l":"left", "c":"center", "r":"right"}
+
+        f = open("hanoi_solution.txt", "r")
+        if f:
+            for l in f.readlines():
+                l = l.strip()
+                if len(l)==0:
+                    continue
+                l = l[0]
+                if l in ('l','c','r'):
+                    column = columns[l]
+                if l in ('0','1','2','3','4','5'):
+                    row = int(l)
+                if l == 'f':
+                    claw = False
+                elif l == 't':
+                    claw = True
+                self.add_record(column,row,claw)
+
     def add_record(self, column, row, claw):
         self.record.append((column,row,claw))
 
@@ -47,6 +73,7 @@ class SliderApp(QWidget):
         super().__init__()
         #self.to_arduino = serial.Serial('/dev/ttyUSB0', 9600)
         self.record_state = RecordState()
+
         self.setWindowTitle("Robot Arm Control")
         self.setGeometry(100, 100, 500, 300)  # (x, y, width, height)
         
@@ -119,14 +146,11 @@ class SliderApp(QWidget):
         layout_buttons = QHBoxLayout()
         self.calibrate_pb = QPushButton("Calibrate")
         self.calibrate_pb.setCheckable(True)
-        self.record_pb = QPushButton("Record")
-        self.record_pb.setCheckable(True)
         self.play_pb = QPushButton("Play")
         self.play_pb.setCheckable(True)
         self.reverse_pb = QPushButton("Reverse")
         self.reverse_pb.setCheckable(True)
         layout_buttons.addWidget(self.calibrate_pb)
-        layout_buttons.addWidget(self.record_pb)
         layout_buttons.addWidget(self.play_pb)
         layout_buttons.addWidget(self.reverse_pb)
         layoutv.addLayout(layout_buttons)
@@ -144,7 +168,6 @@ class SliderApp(QWidget):
         self.claw_hanoi_pb.toggled.connect(self.claw_hanoi_toggled)
 
         self.calibrate_pb.pressed.connect(self.calibrate_pressed)
-        self.record_pb.pressed.connect(self.record_pressed)
         self.play_pb.pressed.connect(self.play_pressed)
         self.reverse_pb.pressed.connect(self.reverse_pressed)
 
@@ -204,9 +227,6 @@ class SliderApp(QWidget):
 
     def calibrate_pressed(self):
         print(f"calibrate {self.calibrate_pb.isChecked()}")
-
-    def record_pressed(self):
-        print(f"record {self.record_pb.isChecked()}")
     
     def play_pressed(self):
         print("play")
