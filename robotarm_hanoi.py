@@ -23,6 +23,9 @@ class RecordState():
     def set_claw(self, claw, value):
         self.claws[claw] = value
 
+    def get_claw(self, claw):
+        return self.claws[claw]
+
     def set_row(self, column, row, values):
         self.columns[column][row] = values
     
@@ -78,16 +81,6 @@ class SliderApp(QWidget):
         self.setGeometry(100, 100, 500, 300)  # (x, y, width, height)
         
         layoutv = QVBoxLayout()
-
-        layout = QHBoxLayout()
-        self.slider_claw = QSlider(Qt.Horizontal, self)
-        self.slider_claw.setMaximum(180)
-        self.slider_claw.setValue(90)
-        layout.addWidget(self.slider_claw)
-        self.label_claw = QLabel("0", self)
-        layout.addWidget(self.label_claw)
-        layoutv.addLayout(layout)
-        self.update_label_claw()
         
         layout = QHBoxLayout()
         self.slider_rotate = QSlider(Qt.Horizontal, self)
@@ -119,6 +112,16 @@ class SliderApp(QWidget):
         layoutv.addLayout(layout)
         self.update_label_ud()
 
+        layout = QHBoxLayout()
+        self.slider_claw = QSlider(Qt.Horizontal, self)
+        self.slider_claw.setMaximum(180)
+        self.slider_claw.setValue(90)
+        layout.addWidget(self.slider_claw)
+        self.label_claw = QLabel("0", self)
+        layout.addWidget(self.label_claw)
+        layoutv.addLayout(layout)
+        self.update_label_claw()
+
         layout_v = QVBoxLayout()
         layout_buttons = QHBoxLayout()
         layout_vertical = QHBoxLayout()
@@ -134,7 +137,7 @@ class SliderApp(QWidget):
         self.slider_hanoi_vertical = QSlider(Qt.Horizontal, self)
 
         self.slider_hanoi_vertical.setMaximum(5)
-        self.slider_hanoi_vertical.setValue(2)
+        self.slider_hanoi_vertical.setValue(5)
         layout_vertical.addWidget(self.slider_hanoi_vertical)
         self.label_hanoi_vertical = QLabel("0", self)
         layout_vertical.addWidget(self.label_hanoi_vertical)
@@ -217,13 +220,14 @@ class SliderApp(QWidget):
         if self.calibrate_pb.isChecked():
             print(v1,v2,v3)
             self.record_state.set_row(sender.text(), self.slider_hanoi_vertical.value(), (v1, v2, v3))
-        if self.record_pb.isChecked():
+        if self.play_pb.isChecked():
             v1, v2, v3 = self.record_state.get_values(sender.text(), self.slider_hanoi_vertical.value())
             if v1:
                 self.set_values((v1, v2, v3, self.slider_claw.value()))
     
     def claw_hanoi_toggled(self):
         _, _, _, claw = self.get_values()
+        self.record_state.set_claw(self.claw_hanoi_pb.isChecked(), )
 
     def calibrate_pressed(self):
         print(f"calibrate {self.calibrate_pb.isChecked()}")
