@@ -17,23 +17,55 @@ class RecordState():
         self.load_solution()
 
         for key in self.columns.keys():
-            for r in range(0,6):
+            for r in range(6):
                 self.columns[key].append(None)
     
     def set_claw(self, claw, value):
-        self.claws[claw] = value
+        self.claws[int(claw)] = value
 
     def get_claw(self, claw):
-        return self.claws[claw]
+        return self.claws[int(claw)]
 
     def set_row(self, column, row, values):
         self.columns[column][row] = values
     
     def get_values(self, column, row):
-        if self.columns[column]:
+        if self.columns[column][row]:
             return self.columns[column][row]
-        return (None, None, None)
+        else:
+            return None
        
+    def save_calibration(self):
+        fw = open("calibration.txt", "wt")
+        for key in self.claws.keys():
+            fw.write(f'{key} {self.get_claw(key)}\n')
+        if len(self.claws.keys())<2:
+            for a in range(0,2-len(self.claw.keys())):
+                fw.write('\n')
+        for key in self.columns.keys():
+            for r in range(6):
+                if self.get_values(key, r):
+                    fw.write(f'{key} {r} {self.get_values(key, r)}\n')
+        fw.close()
+
+    def load_calibration(self):
+        f = open("calibration.txt", "r")
+        if f:
+            for a in range(2):
+                tokens = f.readline().strip().split()
+                if len(tokens)==2:
+                    self.set_claw(int(tokens[0]),int(tokens[1]))
+            for line in f.readlines():
+                line = line.strip()
+                if len(line):
+                    tokens = line.split(' (')
+                    key = tokens[0].split()[0]
+                    row = int(tokens[0].split()[1])
+                    values = tokens[1].strip(')').split(',')
+                    values = (int(values[0]),int(values[1]),int(values[2]))
+                    self.set_row(key, row, values)
+        f.close()
+
     def init_record(self):
         self.record = list()
         self.index = -1
@@ -218,16 +250,20 @@ class SliderApp(QWidget):
         sender = self.sender()
         v1, v2, v3, v4 = self.get_values()
         if self.calibrate_pb.isChecked():
-            print(v1,v2,v3)
             self.record_state.set_row(sender.text(), self.slider_hanoi_vertical.value(), (v1, v2, v3))
         if self.play_pb.isChecked():
-            v1, v2, v3 = self.record_state.get_values(sender.text(), self.slider_hanoi_vertical.value())
-            if v1:
+            values = self.record_state.get_values(sender.text(), self.slider_hanoi_vertical.value())
+            if values:
+                v1, v2, v3 = values
                 self.set_values((v1, v2, v3, self.slider_claw.value()))
     
     def claw_hanoi_toggled(self):
         _, _, _, claw = self.get_values()
-        self.record_state.set_claw(self.claw_hanoi_pb.isChecked(), )
+        if self.calibrate_pb.isChecked():
+            self.record_state.set_claw(self.claw_hanoi_pb.isChecked(), claw)
+        if self.play_pb.isChecked():
+            claw = self.record_state.get_claw(self.claw_hanoi_pb.isChecked())
+            self.set_values((self.slider_rotate.value(),self.slider_fb.value(),self.slider_ud.value(),claw))
 
     def calibrate_pressed(self):
         print(f"calibrate {self.calibrate_pb.isChecked()}")
@@ -249,9 +285,12 @@ class SliderApp(QWidget):
 def main():
     app = QApplication(sys.argv)
     window = SliderApp()
+    window.record_state.load_calibration()
     window.show()
-    sys.exit(app.exec_())
-    window.to_arduino.close()
+    exit_code = app.exec_()
+    window.record_state.save_calibration()
+    #window.to_arduino.close()
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     main()
