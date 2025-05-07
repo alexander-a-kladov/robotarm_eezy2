@@ -99,14 +99,18 @@ class RecordState():
     def get_next_record(self):
         if self.index < len(self.record):
             self.index += 1
-            return self.record[self.index]
+            col, row, claw = self.record[self.index]
+            values = self.get_values(col, row)
+            if values and self.get_claw(claw):
+                v1, v2, v3 = values
+                return v1, v2, v3, self.get_claw(claw)
         return None
 
 
 class SliderApp(QWidget):
     def __init__(self):
         super().__init__()
-        #self.to_arduino = serial.Serial('/dev/ttyUSB0', 9600)
+        self.to_arduino = serial.Serial('/dev/ttyUSB0', 9600)
         self.record_state = RecordState()
 
         self.setWindowTitle("Robot Arm Control")
@@ -117,7 +121,7 @@ class SliderApp(QWidget):
         layout = QHBoxLayout()
         self.slider_rotate = QSlider(Qt.Horizontal, self)
         self.slider_rotate.setMaximum(180)
-        self.slider_rotate.setValue(90)
+        self.slider_rotate.setValue(101)
         layout.addWidget(self.slider_rotate)
         self.label_rotate = QLabel("0", self)
         layout.addWidget(self.label_rotate)
@@ -127,7 +131,7 @@ class SliderApp(QWidget):
         layout = QHBoxLayout()
         self.slider_fb = QSlider(Qt.Horizontal, self)
         self.slider_fb.setMaximum(180)
-        self.slider_fb.setValue(90)
+        self.slider_fb.setValue(70)
         layout.addWidget(self.slider_fb)
         self.label_fb = QLabel("0", self)
         layout.addWidget(self.label_fb)
@@ -137,7 +141,7 @@ class SliderApp(QWidget):
         layout = QHBoxLayout()
         self.slider_ud = QSlider(Qt.Horizontal, self)
         self.slider_ud.setMaximum(180)
-        self.slider_ud.setValue(90)
+        self.slider_ud.setValue(160)
         layout.addWidget(self.slider_ud)
         self.label_ud = QLabel("0", self)
         layout.addWidget(self.label_ud)
@@ -182,9 +186,9 @@ class SliderApp(QWidget):
         self.calibrate_pb = QPushButton("Calibrate")
         self.calibrate_pb.setCheckable(True)
         self.play_pb = QPushButton("Play")
-        self.play_pb.setCheckable(True)
+        #self.play_pb.setCheckable(True)
         self.reverse_pb = QPushButton("Reverse")
-        self.reverse_pb.setCheckable(True)
+        #self.reverse_pb.setCheckable(True)
         layout_buttons.addWidget(self.calibrate_pb)
         layout_buttons.addWidget(self.play_pb)
         layout_buttons.addWidget(self.reverse_pb)
@@ -251,7 +255,7 @@ class SliderApp(QWidget):
         v1, v2, v3, v4 = self.get_values()
         if self.calibrate_pb.isChecked():
             self.record_state.set_row(sender.text(), self.slider_hanoi_vertical.value(), (v1, v2, v3))
-        if self.play_pb.isChecked():
+        else:
             values = self.record_state.get_values(sender.text(), self.slider_hanoi_vertical.value())
             if values:
                 v1, v2, v3 = values
@@ -261,7 +265,7 @@ class SliderApp(QWidget):
         _, _, _, claw = self.get_values()
         if self.calibrate_pb.isChecked():
             self.record_state.set_claw(self.claw_hanoi_pb.isChecked(), claw)
-        if self.play_pb.isChecked():
+        else:
             claw = self.record_state.get_claw(self.claw_hanoi_pb.isChecked())
             self.set_values((self.slider_rotate.value(),self.slider_fb.value(),self.slider_ud.value(),claw))
 
@@ -269,14 +273,16 @@ class SliderApp(QWidget):
         print(f"calibrate {self.calibrate_pb.isChecked()}")
     
     def play_pressed(self):
-        print("play")
+        values = self.record_state.get_next_record()
+        if values:
+            self.set_values(values)
 
     def reverse_pressed(self):
         print("reverse")
 
     def write_to_arduino(self, command):
         print(command)
-        #self.to_arduino.write(command)
+        self.to_arduino.write(command)
         #data = self.to_arduino.read()
         #print(data)
 
